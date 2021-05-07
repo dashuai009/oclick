@@ -3,7 +3,11 @@ package com.dashuai.oclick;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -11,6 +15,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 import androidx.annotation.Nullable;
+
+import static android.graphics.Color.rgb;
 
 public class Digit extends View {
 
@@ -102,44 +108,15 @@ public class Digit extends View {
         MINUTE_POINTER_LENGTH = PANEL_RADIUS - 250;
         SECOND_POINTER_LENGTH = PANEL_RADIUS - 150;
 
-        drawDegrees(canvas);
+        //drawDegrees(canvas);
         drawHoursValues(canvas);
-        drawNeedles(canvas);
+        drawDigit(canvas);
 
         postInvalidateDelayed(1000);
         // todo 每一秒刷新一次，让指针动起来
 
     }
 
-    private void drawDegrees(Canvas canvas) {
-
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setStyle(Paint.Style.FILL_AND_STROKE);
-        paint.setStrokeCap(Paint.Cap.ROUND);
-        paint.setStrokeWidth(mWidth * DEFAULT_DEGREE_STROKE_WIDTH);
-        paint.setColor(degreesColor);
-
-        int rPadded = mCenterX - (int) (mWidth * 0.01f);
-        int rEnd = mCenterX - (int) (mWidth * 0.05f);
-
-        for (int i = 0; i < FULL_ANGLE; i += 6 /* Step */) {
-
-            if ((i % RIGHT_ANGLE) != 0 && (i % 15) != 0)
-                paint.setAlpha(CUSTOM_ALPHA);
-            else {
-                paint.setAlpha(FULL_ALPHA);
-            }
-
-            int startX = (int) (mCenterX + rPadded * Math.cos(Math.toRadians(i)));
-            int startY = (int) (mCenterX - rPadded * Math.sin(Math.toRadians(i)));
-
-            int stopX = (int) (mCenterX + rEnd * Math.cos(Math.toRadians(i)));
-            int stopY = (int) (mCenterX - rEnd * Math.sin(Math.toRadians(i)));
-
-            canvas.drawLine(startX, startY, stopX, stopY, paint);
-
-        }
-    }
 
     /**
      * Draw Hour Text Values, such as 1 2 3 ...
@@ -150,6 +127,48 @@ public class Digit extends View {
         // Default Color:
         // - hoursValuesColor
 
+        float circle[] = new float[2];
+        Calendar calendar = Calendar.getInstance();
+        Date now = calendar.getTime();
+        int nowHours = now.getHours();
+        int nowMinutes = now.getMinutes();
+        int nowSeconds = now.getSeconds();
+        float w = 180f;
+        RectF rect = new RectF(0, 0, 2 * mCenterX, 2 * mCenterY);
+        RectF rectInner = new RectF(w, w, 2 * mCenterX - w, 2 * mCenterY - w);
+
+
+
+        mNeedlePaint = new Paint();
+
+
+        mNeedlePaint.setColor(Color.LTGRAY);
+
+        canvas.drawCircle(mCenterX, mCenterY, mRadius, mNeedlePaint);
+
+        mNeedlePaint.setColor(Color.WHITE);
+        canvas.drawCircle(mCenterX, mCenterY, mRadius-w, mNeedlePaint);
+
+        LinearGradient linearGradient = new LinearGradient(0, 0, 200, 0, rgb(228, 51, 255), rgb(109, 51, 255),
+                Shader.TileMode.CLAMP);
+        mNeedlePaint.setShader(linearGradient);
+        //mNeedlePaint.setStyle(Paint.Style.STROKE);
+
+        //mNeedlePaint.setStrokeWidth(90f);
+        mNeedlePaint.setStrokeCap(Paint.Cap.ROUND);
+        float nowDegree = nowSeconds * 6;
+        circle[0] = (float) (mCenterX + (mRadius - w / 2) * Math.cos((nowDegree-90) * UNIT_DEGREE/6));
+        circle[1] = (float) (mCenterY + (mRadius - w / 2) * Math.sin((nowDegree-90) * UNIT_DEGREE/6));
+        canvas.drawArc(rect,nowDegree+90,180,true,mNeedlePaint);
+        canvas.drawCircle(circle[0], circle[1], w / 2, mNeedlePaint);
+        mNeedlePaint.setShader(null);
+        mNeedlePaint.setColor(Color.WHITE);
+        circle[0] = (float) (mCenterX + (mRadius - w / 2) * Math.cos((nowDegree+90) * UNIT_DEGREE/6));
+        circle[1] = (float) (mCenterY + (mRadius - w / 2) * Math.sin((nowDegree+90) * UNIT_DEGREE/6));
+        canvas.drawArc(rectInner, nowDegree + 90, 180, true, mNeedlePaint);
+        mNeedlePaint.setColor(Color.LTGRAY);
+        canvas.drawCircle(circle[0], circle[1], w / 2, mNeedlePaint);
+
 
     }
 
@@ -159,7 +178,7 @@ public class Digit extends View {
      *
      * @param canvas
      */
-    private void drawNeedles(final Canvas canvas) {
+    private void drawDigit(final Canvas canvas) {
         Calendar calendar = Calendar.getInstance();
         Date now = calendar.getTime();
         int nowHours = now.getHours();
@@ -167,13 +186,13 @@ public class Digit extends View {
         int nowSeconds = now.getSeconds();
 
 
-        float myTextSize=80f;
-        Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        float myTextSize = 234f;
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-        paint.setColor(Color.RED);
+        paint.setColor(Color.GRAY);
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTextSize(myTextSize);
-        canvas.drawText(""+nowHours+":"+nowMinutes,mCenterX,mCenterY-myTextSize/2,paint);
+        canvas.drawText("" + nowHours + ":" + (nowMinutes < 10 ? "0" : "") + nowMinutes, mCenterX, mCenterY + myTextSize / 2, paint);
 
     }
 

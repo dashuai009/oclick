@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
         tab_needle=findViewById(R.id.tab_needle);
         pagerAdapter = new ScreenSlidePagerAdapter(this);
         pager.setAdapter(pagerAdapter);
+        pager.setPageTransformer(new ZoomOutPageTransformer());
         //tab_needle.setupWithViewPager(pager_needle);
         new TabLayoutMediator(tab_needle, pager,
                 (tab, position) ->{

@@ -3,7 +3,9 @@ package com.dashuai.oclick;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -11,6 +13,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 import androidx.annotation.Nullable;
+
+import static android.graphics.Color.rgb;
 
 public class Needle extends View {
 
@@ -25,6 +29,7 @@ public class Needle extends View {
     private static final int DEFAULT_SECONDARY_COLOR = Color.LTGRAY;
 
     private static final float DEFAULT_DEGREE_STROKE_WIDTH = 0.010f;
+    private static final float DEFAULT_NEEDLW_STROKE_WIDTH_PERCENT = 0.02f;
 
     public final static int AM = 0;
 
@@ -79,7 +84,8 @@ public class Needle extends View {
 
     private void init(Context context, AttributeSet attrs) {
 
-        this.degreesColor = DEFAULT_PRIMARY_COLOR;
+        this.degreesColor = Color.LTGRAY;
+        ;
 
         mNeedlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mNeedlePaint.setStyle(Paint.Style.FILL_AND_STROKE);
@@ -135,8 +141,9 @@ public class Needle extends View {
 
             int stopX = (int) (mCenterX + rEnd * Math.cos(Math.toRadians(i)));
             int stopY = (int) (mCenterX - rEnd * Math.sin(Math.toRadians(i)));
-
-            canvas.drawLine(startX, startY, stopX, stopY, paint);
+            if (i % 90 != 0) {
+                canvas.drawLine(startX, startY, stopX, stopY, paint);
+            }
 
         }
     }
@@ -150,14 +157,15 @@ public class Needle extends View {
         // Default Color:
         // - hoursValuesColor
         Paint paint = new Paint();
-        paint.setTextSize(80f);
-        paint.setColor(Color.RED);
+        float textSz = 80f;
+        paint.setTextSize(textSz);
+        paint.setColor(Color.BLACK);
         paint.setTextAlign(Paint.Align.CENTER);
-        float radius=PANEL_RADIUS*8/10;
-        canvas.drawText("12",mCenterX,mCenterY-radius+40f,paint);
-        canvas.drawText("3",mCenterX+radius,mCenterY+40f,paint);
-        canvas.drawText("6",mCenterX,mCenterY+radius,paint);
-        canvas.drawText("9",mCenterX-radius,mCenterY+40f,paint);
+        float radius = PANEL_RADIUS * 8 / 10;
+        canvas.drawText("12", mCenterX, mCenterY - PANEL_RADIUS + textSz, paint);
+        canvas.drawText("3", mCenterX + PANEL_RADIUS - textSz / 2, mCenterY + textSz / 2, paint);
+        canvas.drawText("6", mCenterX, mCenterY + PANEL_RADIUS - textSz / 4, paint);
+        canvas.drawText("9", mCenterX - PANEL_RADIUS + textSz / 2, mCenterY + textSz / 2, paint);
 
     }
 
@@ -173,14 +181,14 @@ public class Needle extends View {
         int nowHours = now.getHours();
         int nowMinutes = now.getMinutes();
         int nowSeconds = now.getSeconds();
-        // 画秒针
-        drawPointer(canvas, 2, nowSeconds);
-        // 画分针
-        // todo 画分针
-        drawPointer(canvas,1,nowMinutes);
         // 画时针
         int part = nowMinutes / 12;
         drawPointer(canvas, 0, 5 * nowHours + part);
+        // 画分针
+        // todo 画分针
+        drawPointer(canvas, 1, nowMinutes);
+        // 画秒针
+        drawPointer(canvas, 2, nowSeconds);
 
 
     }
@@ -190,30 +198,55 @@ public class Needle extends View {
 
         float degree;
         float[] pointerHeadXY = new float[2];
+        float[] pointerInnerXY = new float[2];
 
-        mNeedlePaint.setStrokeWidth(mWidth * DEFAULT_DEGREE_STROKE_WIDTH);
+        mNeedlePaint.setStrokeCap(Paint.Cap.ROUND);
+
         switch (pointerType) {
             case 0:
+                //时针
                 degree = value * UNIT_DEGREE;
-                mNeedlePaint.setColor(Color.WHITE);
+                mNeedlePaint.setStrokeWidth(mWidth * DEFAULT_NEEDLW_STROKE_WIDTH_PERCENT);
+                mNeedlePaint.setColor(Color.LTGRAY);
+                mNeedlePaint.setShader(null);
                 pointerHeadXY = getPointerHeadXY(HOUR_POINTER_LENGTH, degree);
+                pointerInnerXY[0] = mCenterX + (pointerHeadXY[0] - mCenterX) / 2;
+                pointerInnerXY[1] = mCenterY + (pointerHeadXY[1] - mCenterY) / 2;
                 break;
             case 1:
                 // todo 画分针，设置分针的颜色
+                mNeedlePaint.setStrokeWidth(mWidth * DEFAULT_NEEDLW_STROKE_WIDTH_PERCENT);
                 degree = value * UNIT_DEGREE;
-                mNeedlePaint.setColor(Color.RED);
-                pointerHeadXY = getPointerHeadXY(HOUR_POINTER_LENGTH, degree);
+                mNeedlePaint.setColor(Color.LTGRAY);
+                mNeedlePaint.setShader(null);
+
+                pointerHeadXY = getPointerHeadXY(MINUTE_POINTER_LENGTH, degree);
+                pointerInnerXY[0] = mCenterX + (pointerHeadXY[0] - mCenterX) / 2;
+                pointerInnerXY[1] = mCenterY + (pointerHeadXY[1] - mCenterY) / 2;
 
                 break;
             case 2:
+                //秒针
+                mNeedlePaint.setStrokeWidth(mWidth * DEFAULT_DEGREE_STROKE_WIDTH);
                 degree = value * UNIT_DEGREE;
                 mNeedlePaint.setColor(Color.GREEN);
+                LinearGradient linearGradient = new LinearGradient(0, 0, 200, 0, rgb(228, 51, 255), rgb(109, 51, 255),
+                        Shader.TileMode.MIRROR);
+                mNeedlePaint.setShader(linearGradient);
                 pointerHeadXY = getPointerHeadXY(SECOND_POINTER_LENGTH, degree);
+                pointerInnerXY[0] = mCenterX - (pointerHeadXY[0] - mCenterX) / 10;
+                pointerInnerXY[1] = mCenterY - (pointerHeadXY[1] - mCenterY) / 10;
                 break;
         }
 
-
         canvas.drawLine(mCenterX, mCenterY, pointerHeadXY[0], pointerHeadXY[1], mNeedlePaint);
+        if(pointerType<=1){
+            mNeedlePaint.setStrokeWidth(mWidth * DEFAULT_DEGREE_STROKE_WIDTH / 2);
+            mNeedlePaint.setColor(Color.WHITE);
+        }else{
+            canvas.drawCircle(mCenterX,mCenterY,mWidth * DEFAULT_DEGREE_STROKE_WIDTH,mNeedlePaint);
+        }
+        canvas.drawLine(mCenterX, mCenterY, pointerInnerXY[0], pointerInnerXY[1], mNeedlePaint);
     }
 
     private float[] getPointerHeadXY(float pointerLength, float degree) {
