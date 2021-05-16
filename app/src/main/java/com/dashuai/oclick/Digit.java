@@ -133,7 +133,7 @@ public class Digit extends View {
         int nowHours = now.getHours();
         int nowMinutes = now.getMinutes();
         int nowSeconds = now.getSeconds();
-        float w = 180f;
+        float w = mRadius/4;
         RectF rect = new RectF(0, 0, 2 * mCenterX, 2 * mCenterY);
         RectF rectInner = new RectF(w, w, 2 * mCenterX - w, 2 * mCenterY - w);
 
